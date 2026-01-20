@@ -1,4 +1,5 @@
 const learningService = require('./learning.service')
+const { getTopicProgress } = require('./learning.service')
 
 const getTopics = async (req, res, next) => {
   try {
@@ -30,8 +31,25 @@ const updateProgress = async (req, res, next) => {
   }
 }
 
+async function getProgress(req, res, next) {
+  try {
+    const { topicId } = req.params
+    const userId = req.user.id
+
+    const progress = await getTopicProgress({
+      userId,
+      topicId,
+    })
+
+    res.json(progress)
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports = {
   getTopics,
   getTopicDetail,
-  updateProgress
+  updateProgress,
+    getProgress,
 }

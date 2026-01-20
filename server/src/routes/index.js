@@ -1,6 +1,5 @@
 const express = require('express')
 const router = express.Router()
-
 const authMiddleware = require('../middlewares/auth.middleware')
 
 router.get('/health', (req, res) => {
@@ -19,6 +18,8 @@ router.get('/protected', authMiddleware, (req, res) => {
 
 router.use('/auth', require('../modules/auth/auth.routes'))
 router.use('/ai', require('../modules/ai/ai.routes'))
+router.use('/learning', require('../modules/learning/learning.routes'))
+router.use('/quiz', require('../modules/learning/quiz.routes'))
 router.use('/learning', require('../modules/learning/learning.routes'))
 
 module.exports = router

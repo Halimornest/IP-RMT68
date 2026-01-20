@@ -114,10 +114,40 @@ const generateQuiz = async ({ topicId, level, count = 5 }) => {
   }
 }
 
+async function generateExplanation({
+  question,
+  options,
+  correctOptionIndex,
+  selectedOptionIndex,
+  level = 'beginner',
+}) {
+  const prompt = `
+You are a teaching assistant.
+
+Question:
+${question}
+
+Options:
+${options.map((o, i) => `${i}. ${o}`).join('\n')}
+
+Correct answer index: ${correctOptionIndex}
+User selected index: ${selectedOptionIndex}
+
+Explain briefly (2-3 sentences):
+- Why the correct answer is correct
+- Why the selected answer is incorrect (if different)
+
+Level: ${level}
+Return plain text only.
+`
+  return generateContent(prompt)
+}
+
 module.exports = {
   runAI,
   generateTopics,
   generateOutline,
   generateQuiz,
+  generateExplanation,
 }
 

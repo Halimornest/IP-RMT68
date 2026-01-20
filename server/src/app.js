@@ -2,7 +2,10 @@ require('dotenv').config()
 
 const express = require('express')
 const cors = require('cors')
-const routes = require('./routes/index')
+
+require('./models/associations')
+
+const routes = require('./routes')
 const errorMiddleware = require('./middlewares/error.middleware')
 
 const app = express()
@@ -10,6 +13,7 @@ const app = express()
 app.get('/ping', (req, res) => {
   res.send('pong')
 })
+
 app.use(cors())
 app.use(express.json())
 
