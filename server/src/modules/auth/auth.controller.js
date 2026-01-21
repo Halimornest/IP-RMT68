@@ -1,5 +1,9 @@
+const bcrypt = require('bcrypt')
 const { generateToken } = require('./auth.service')
 const User = require('../user/user.model')
+const { successResponse } = require('../../utils/response')
+const { requireFields } = require('../../utils/validation')
+const ApiError = require('../../utils/ApiError')
 
 function sanitizeUser(user) {
   return {
@@ -11,36 +15,33 @@ function sanitizeUser(user) {
 
 async function register(req, res, next) {
   try {
-    const { name, email, password } = req.body
+    requireFields(['email', 'password'], req.body)
 
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'email and password are required',
-      })
-    }
+    const { email, password } = req.body
 
     const existingUser = await User.findOne({ where: { email } })
     if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: 'Email already registered',
-      })
+      throw new ApiError(409, 'Email already registered')
     }
 
+    const salt = await bcrypt.genSalt(10)
+    const passwordHash = await bcrypt.hash(password, salt)
+
     const user = await User.create({
-      name,
       email,
-      password,
+      passwordHash,
     })
 
     const token = generateToken(user)
 
-    res.status(201).json({
-      success: true,
-      user: sanitizeUser(user),
-      token,
-    })
+    return successResponse(
+      res,
+      {
+        user: sanitizeUser(user),
+        token,
+      },
+      201
+    )
   } catch (err) {
     next(err)
   }
@@ -48,28 +49,23 @@ async function register(req, res, next) {
 
 async function login(req, res, next) {
   try {
+    requireFields(['email', 'password'], req.body)
+
     const { email, password } = req.body
 
     const user = await User.findOne({ where: { email } })
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials',
-      })
+      throw new ApiError(401, 'Invalid credentials')
     }
 
     const isMatch = await user.comparePassword(password)
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials',
-      })
+      throw new ApiError(401, 'Invalid credentials')
     }
 
     const token = generateToken(user)
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       user: sanitizeUser(user),
       token,
     })
@@ -85,14 +81,10 @@ async function me(req, res, next) {
     })
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      })
+      throw new ApiError(404, 'User not found')
     }
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       user,
     })
   } catch (err) {
@@ -100,8 +92,4 @@ async function me(req, res, next) {
   }
 }
 
-module.exports = {
-  register,
-  login,
-  me,
-}
+module.exports = { register, login, me }

@@ -11,4 +11,19 @@ async function createTopics({ topics, subject, level, userId }) {
   return Topic.bulkCreate(data, { returning: true })
 }
 
-module.exports = { createTopics }
+async function getAllTopics() {
+  return Topic.findAll({
+    order: [['created_at', 'DESC']],
+  })
+}
+
+async function getTopicById(id) {
+  return Topic.findByPk(id)
+}
+
+module.exports = {
+  createTopics,
+  getAllTopics,
+  getTopicById,
+}
+

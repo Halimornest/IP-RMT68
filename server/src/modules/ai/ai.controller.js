@@ -1,122 +1,100 @@
 const aiService = require('./ai.service')
 const { createTopics } = require('../learning/topic.service')
+const { successResponse } = require('../../utils/response')
+const { requireFields, requireUUID } = require('../../utils/validation')
+const ApiError = require('../../utils/ApiError')
+const retry = require('../../utils/retry')
 
-const askAI = async (req, res, next) => {
+async function askAI(req, res, next) {
   try {
-    const { topicId, action, level } = req.body
+    requireFields(['topicId', 'action'], req.body)
+    const { topicId, action, level = 'beginner' } = req.body
+    requireUUID(topicId, 'topicId')
 
-    const result = await aiService.runAI({
-      topicId,
-      action,
-      level,
-    })
-
-    res.json({
-      answer: result,
-    })
+    const answer = await aiService.runAI({ topicId, action, level })
+    return successResponse(res, { answer })
   } catch (err) {
     next(err)
   }
 }
 
-const generateLearningTopics = async (req, res, next) => {
+async function generateLearningTopics(req, res, next) {
   try {
-    const { subject, level } = req.body
+    requireFields(['subject'], req.body)
+    const { subject, level = 'beginner' } = req.body
 
-    if (!subject) {
-      return res.status(400).json({
-        message: 'subject is required',
-      })
-    }
-
-    const topics = await aiService.generateTopics({
-      subject,
-      level: level || 'beginner',
-    })
-
-    res.json({
-      subject,
-      level: level || 'beginner',
-      topics,
-    })
+    const topics = await aiService.generateTopics({ subject, level })
+    return successResponse(res, { subject, level, topics })
   } catch (err) {
     next(err)
   }
 }
 
-const generateAndSaveTopics = async (req, res, next) => {
+async function generateAndSaveTopics(req, res, next) {
   try {
-    const { subject, level } = req.body
+    requireFields(['subject'], req.body)
+    const { subject, level = 'beginner' } = req.body
     const userId = req.user.id
 
-    if (!subject) {
-      return res.status(400).json({ message: 'subject is required' })
-    }
+    const topics = await retry(
+      () => aiService.generateTopics({ subject, level }),
+      { retries: 3, delay: 1500 }
+    )
 
-    const topics = await aiService.generateTopics({
-      subject,
-      level: level || 'beginner',
-    })
+    if (!Array.isArray(topics) || topics.length === 0) {
+      throw new ApiError(500, 'AI failed to generate learning topics')
+    }
 
     const savedTopics = await createTopics({
       topics,
       subject,
-      level: level || 'beginner',
+      level,
       userId,
     })
 
-    res.status(201).json({
-      subject,
-      level: level || 'beginner',
-      count: savedTopics.length,
-      topics: savedTopics,
-    })
+    return successResponse(
+      res,
+      {
+        subject,
+        level,
+        count: savedTopics.length,
+        topics: savedTopics,
+      },
+      201
+    )
   } catch (err) {
     next(err)
   }
 }
 
-const generateOutline = async (req, res, next) => {
+async function generateOutline(req, res, next) {
   try {
-    const { topicId, level } = req.body
+    requireFields(['topicId'], req.body)
+    const { topicId, level = 'beginner' } = req.body
+    requireUUID(topicId, 'topicId')
 
-    if (!topicId) {
-      return res.status(400).json({ message: 'topicId is required' })
-    }
-
-    const outline = await aiService.generateOutline({
-      topicId,
-      level: level || 'beginner',
-    })
-
-    res.json({
-      topicId,
-      level: level || 'beginner',
-      outline,
-    })
+    const outline = await aiService.generateOutline({ topicId, level })
+    return successResponse(res, { topicId, level, outline })
   } catch (err) {
     next(err)
   }
 }
 
-const generateQuiz = async (req, res, next) => {
+async function generateQuiz(req, res, next) {
   try {
-    const { topicId, level, count } = req.body
+    requireFields(['topicId'], req.body)
+    const { topicId, level = 'beginner', count = 5 } = req.body
+    requireUUID(topicId, 'topicId')
 
-    if (!topicId) {
-      return res.status(400).json({ message: 'topicId is required' })
+    const quiz = await aiService.generateQuiz({ topicId, level, count })
+    if (!Array.isArray(quiz)) {
+      throw new ApiError(500, 'Failed to generate quiz')
     }
 
-    const quiz = await aiService.generateQuiz({
+    return successResponse(res, {
       topicId,
-      level: level || 'beginner',
-      count: count || 5,
-    })
-
-    res.json({
-      topicId,
-      level: level || 'beginner',
-      count: quiz.length,
+      level,
+      totalQuestions: quiz.length,
       quiz,
     })
   } catch (err) {
@@ -131,4 +109,3 @@ module.exports = {
   generateOutline,
   generateQuiz,
 }
-

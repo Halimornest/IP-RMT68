@@ -8,4 +8,5 @@ Quiz.hasMany(QuizResult, {
 
 QuizResult.belongsTo(Quiz, {
   foreignKey: 'quizId',
+  as: 'quiz',
 })

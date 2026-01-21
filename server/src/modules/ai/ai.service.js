@@ -2,14 +2,15 @@ const Topic = require('../learning/topic.model')
 const {
   buildPrompt,
   buildOutlinePrompt,
+  buildQuizPrompt,
 } = require('./prompt.builder')
 const { generateContent } = require('./providers/openai.provider')
-const { buildQuizPrompt } = require('./prompt.builder')
+const ApiError = require('../../utils/ApiError')
 
-const runAI = async ({ topicId, action, level }) => {
+async function runAI({ topicId, action, level }) {
   const topic = await Topic.findByPk(topicId)
   if (!topic) {
-    throw new Error('Topic not found')
+    throw new ApiError(404, 'Topic not found')
   }
 
   const prompt = buildPrompt({
@@ -18,11 +19,10 @@ const runAI = async ({ topicId, action, level }) => {
     level,
   })
 
-  const aiResponse = await generateContent(prompt)
-  return aiResponse
+  return generateContent(prompt)
 }
 
-const generateTopics = async ({ subject, level }) => {
+async function generateTopics({ subject, level }) {
   const prompt = `
 You are an education expert.
 
@@ -36,15 +36,14 @@ DO NOT wrap the response in markdown.
 
   const response = await generateContent(prompt)
 
-  let cleaned = response
+  const cleaned = response
     .replace(/```json/g, '')
     .replace(/```/g, '')
     .trim()
 
   try {
     return JSON.parse(cleaned)
-  } catch (err) {
-    console.error('JSON parse failed, fallback used:', err)
+  } catch {
     return cleaned
       .split('\n')
       .map(t => t.replace(/^[\d\-\.\s"]+|"+$/g, '').trim())
@@ -52,10 +51,10 @@ DO NOT wrap the response in markdown.
   }
 }
 
-const generateOutline = async ({ topicId, level }) => {
+async function generateOutline({ topicId, level }) {
   const topic = await Topic.findByPk(topicId)
   if (!topic) {
-    throw new Error('Topic not found')
+    throw new ApiError(404, 'Topic not found')
   }
 
   const prompt = buildOutlinePrompt({
@@ -65,15 +64,14 @@ const generateOutline = async ({ topicId, level }) => {
 
   const response = await generateContent(prompt)
 
-  let cleaned = response
+  const cleaned = response
     .replace(/```json/g, '')
     .replace(/```/g, '')
     .trim()
 
   try {
     return JSON.parse(cleaned)
-  } catch (err) {
-    console.error('Outline JSON parse failed, fallback used:', err)
+  } catch {
     return [
       {
         title: topic.title,
@@ -86,9 +84,11 @@ const generateOutline = async ({ topicId, level }) => {
   }
 }
 
-const generateQuiz = async ({ topicId, level, count = 5 }) => {
+async function generateQuiz({ topicId, level, count }) {
   const topic = await Topic.findByPk(topicId)
-  if (!topic) throw new Error('Topic not found')
+  if (!topic) {
+    throw new ApiError(404, 'Topic not found')
+  }
 
   const outline = await generateOutline({ topicId, level })
 
@@ -101,26 +101,27 @@ const generateQuiz = async ({ topicId, level, count = 5 }) => {
 
   const response = await generateContent(prompt)
 
-  let cleaned = response
+  const cleaned = response
     .replace(/```json/g, '')
     .replace(/```/g, '')
     .trim()
 
   try {
     return JSON.parse(cleaned)
-  } catch (err) {
-    console.error('Quiz JSON parse failed:', err)
+  } catch {
     return []
   }
 }
 
-async function generateExplanation({
-  question,
-  options,
-  correctOptionIndex,
-  selectedOptionIndex,
-  level = 'beginner',
-}) {
+async function generateExplanation(payload) {
+  const {
+    question,
+    options,
+    correctOptionIndex,
+    selectedOptionIndex,
+    level = 'beginner',
+  } = payload
+
   const prompt = `
 You are a teaching assistant.
 
@@ -133,13 +134,11 @@ ${options.map((o, i) => `${i}. ${o}`).join('\n')}
 Correct answer index: ${correctOptionIndex}
 User selected index: ${selectedOptionIndex}
 
-Explain briefly (2-3 sentences):
-- Why the correct answer is correct
-- Why the selected answer is incorrect (if different)
-
+Explain briefly (2-3 sentences).
 Level: ${level}
 Return plain text only.
 `
+
   return generateContent(prompt)
 }
 
@@ -150,4 +149,3 @@ module.exports = {
   generateQuiz,
   generateExplanation,
 }
-

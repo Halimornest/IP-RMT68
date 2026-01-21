@@ -1,12 +1,20 @@
+const ApiError = require('../utils/ApiError')
+
 function errorMiddleware(err, req, res, next) {
-  console.error(err)
+  console.error('🔥 ERROR:', err)
 
-  const statusCode = err.statusCode || 500
-  const message = err.message || 'Internal Server Error'
+  if (err instanceof ApiError) {
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      errors: err.errors || null,
+    })
+  }
 
-  res.status(statusCode).json({
+  return res.status(500).json({
     success: false,
-    message,
+    message: err.message || 'Internal Server Error',
+    errors: null,
   })
 }
 
