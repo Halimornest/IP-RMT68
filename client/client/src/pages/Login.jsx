@@ -1,33 +1,53 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { login } from "../features/auth/authSlice";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { isLoading, error, isAuth } = useSelector((s) => s.auth);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const submit = (e) => {
+    e.preventDefault();
+    dispatch(login({ email, password }));
+  };
+
+  useEffect(() => {
+    if (isAuth) {
+      navigate("/"); 
+    }
+  }, [isAuth, navigate]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="bg-gray-800 p-8 rounded-lg w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-white text-center mb-4">
-          Login
-        </h1>
+    <div className="container vh-100 d-flex justify-content-center align-items-center">
+      <form onSubmit={submit} className="card p-4 shadow" style={{ width: 350 }}>
+        <h3 className="text-center mb-3">Login</h3>
 
         <input
-          className="w-full mb-3 px-4 py-2 rounded bg-gray-700 text-white"
+          className="form-control mb-3"
           placeholder="Email"
           onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
           type="password"
-          className="w-full mb-4 px-4 py-2 rounded bg-gray-700 text-white"
+          className="form-control mb-3"
           placeholder="Password"
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold py-2 rounded">
-          Login
+        <button className="btn btn-success w-100" disabled={isLoading}>
+          {isLoading ? "Loading..." : "Login"}
         </button>
-      </div>
+
+        {error && (
+          <p className="text-danger text-center mt-2">{error}</p>
+        )}
+      </form>
     </div>
   );
 };

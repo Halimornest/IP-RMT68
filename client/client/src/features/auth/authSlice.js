@@ -50,11 +50,12 @@ const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(login.fulfilled, (state, action) => {
+        const { token, user } = action.payload.data; // ✅ BENAR
         state.isLoading = false;
-        state.token = action.payload.token;
-        state.user = action.payload.user;
+        state.token = token;
+        state.user = user;
         state.isAuth = true;
-        localStorage.setItem("token", action.payload.token);
+        localStorage.setItem("token", token);
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
