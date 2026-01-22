@@ -1,7 +1,9 @@
 import api from "../../services/api";
 
 export const getQuizAPI = async (topicId) => {
-  const res = await api.get(`/quiz/${topicId}`);
+  const res = await api.post("/quiz/generate-and-save", {
+    topicId,
+  });
   return res.data;
 };
 

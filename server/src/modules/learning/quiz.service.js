@@ -13,33 +13,46 @@ async function submitQuiz({ quizId, userId, answers }) {
   const quiz = await Quiz.findByPk(quizId)
   if (!quiz) throw new Error('Quiz not found')
 
-  let score = 0
+  if (!Array.isArray(answers) || answers.length === 0) {
+    throw new Error('No answers submitted')
+  }
+
+  if (answers.length !== quiz.questions.length) {
+    throw new Error('Incomplete quiz answers')
+  }
+
+  const existing = await QuizResult.findOne({
+    where: { quizId, userId },
+  })
+  if (existing) {
+    throw new Error('Quiz already submitted')
+  }
+
+  let correctCount = 0
   const details = []
 
   quiz.questions.forEach((q, index) => {
-    const userAnswer = answers.find(a => a.questionIndex === index)
-
-    const correctOptionIndex = q.options.findIndex(
-      opt => opt.trim() === q.answer.trim()
-    )
-
-    const selectedOptionIndex =
-      userAnswer?.optionIndex ?? null
+    const userAnswer = answers[index]
 
     const isCorrect =
-      selectedOptionIndex === correctOptionIndex
+      userAnswer &&
+      userAnswer.selectedOption?.trim() === q.answer.trim()
 
-    if (isCorrect) score += 1
+    if (isCorrect) correctCount++
 
     details.push({
       questionIndex: index,
       question: q.question,
       options: q.options,
-      selectedOptionIndex,
-      correctOptionIndex,
+      selectedOption: userAnswer?.selectedOption ?? null,
+      correctOption: q.answer,
       isCorrect,
     })
   })
+
+  const score = Math.round(
+    (correctCount / quiz.questions.length) * 100
+  )
 
   const result = await QuizResult.create({
     quizId,
@@ -50,12 +63,13 @@ async function submitQuiz({ quizId, userId, answers }) {
 
   return {
     totalQuestions: quiz.questions.length,
-    correct: score,
+    correct: correctCount,
     score,
     details,
     resultId: result.id,
   }
 }
+
 
 module.exports = {
   saveQuiz,

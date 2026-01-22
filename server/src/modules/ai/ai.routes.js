@@ -6,8 +6,13 @@ const controller = require('./ai.controller')
 router.use(authMiddleware)
 
 router.post('/ask', controller.askAI)
+
+router.post(
+  '/generate-and-save-topics',
+  controller.generateAndSaveTopics
+)
+
 router.post('/generate-topic', controller.generateLearningTopics)
-router.post('/generate-topic-and-save', controller.generateAndSaveTopics)
 router.post('/generate-outline', controller.generateOutline)
 router.post('/generate-quiz', controller.generateQuiz)
 

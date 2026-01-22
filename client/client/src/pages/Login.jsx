@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
@@ -6,30 +6,37 @@ import { useNavigate } from "react-router-dom";
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isLoading, error, isAuth } = useSelector((s) => s.auth);
+  const { isAuth, isLoading, error } = useSelector((s) => s.auth);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const submit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     dispatch(login({ email, password }));
   };
 
   useEffect(() => {
-    if (isAuth) {
-      navigate("/"); 
-    }
+    if (isAuth) navigate("/");
   }, [isAuth, navigate]);
 
   return (
     <div className="container vh-100 d-flex justify-content-center align-items-center">
-      <form onSubmit={submit} className="card p-4 shadow" style={{ width: 350 }}>
-        <h3 className="text-center mb-3">Login</h3>
+      <form
+        className="card shadow p-4"
+        style={{ width: 360 }}
+        onSubmit={handleSubmit}
+      >
+        <h3 className="text-center mb-2">Welcome Back 👋</h3>
+        <p className="text-center text-muted mb-4">
+          Log in to continue your AI-powered learning journey.
+        </p>
 
         <input
+          type="email"
           className="form-control mb-3"
           placeholder="Email"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
@@ -37,15 +44,21 @@ const Login = () => {
           type="password"
           className="form-control mb-3"
           placeholder="Password"
+          value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button className="btn btn-success w-100" disabled={isLoading}>
-          {isLoading ? "Loading..." : "Login"}
+        <button
+          className="btn btn-primary w-100"
+          disabled={isLoading}
+        >
+          {isLoading ? "Signing in..." : "Sign In"}
         </button>
 
         {error && (
-          <p className="text-danger text-center mt-2">{error}</p>
+          <p className="text-danger text-center mt-3">
+            Invalid email or password. Please try again.
+          </p>
         )}
       </form>
     </div>

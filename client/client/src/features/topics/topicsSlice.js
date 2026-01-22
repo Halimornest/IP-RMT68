@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../../services/api";
 import {
   getTopicsAPI,
   createTopicAPI,
@@ -8,6 +9,7 @@ import {
 const initialState = {
   list: [],
   isLoading: false,
+  isFetched: false,
   error: null,
 };
 
@@ -27,7 +29,7 @@ export const createTopic = createAsyncThunk(
   async (payload, thunkAPI) => {
     try {
       return await createTopicAPI(payload);
-    } catch {
+    } catch (err) {
       return thunkAPI.rejectWithValue("Failed to create topic");
     }
   }
@@ -39,8 +41,23 @@ export const deleteTopic = createAsyncThunk(
     try {
       await deleteTopicAPI(id);
       return id;
-    } catch {
+    } catch (err) {
       return thunkAPI.rejectWithValue("Delete failed");
+    }
+  }
+);
+
+export const generateTopics = createAsyncThunk(
+  "topics/generate",
+  async ({ subject, level }, thunkAPI) => {
+    try {
+      const res = await api.post("/ai/generate-and-save-topics", {
+        subject,
+        level,
+      });
+      return res.data.data.topics; 
+    } catch (err) {
+      return thunkAPI.rejectWithValue("Failed to generate topics");
     }
   }
 );
@@ -51,25 +68,23 @@ const topicsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+
       .addCase(fetchTopics.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
       })
       .addCase(fetchTopics.fulfilled, (state, action) => {
         state.isLoading = false;
+        state.isFetched = true;
 
         const payload = action.payload;
 
-        if (Array.isArray(payload)) {
-          state.list = payload;
-        } else if (Array.isArray(payload?.data)) {
-          state.list = payload.data;
-        } else if (Array.isArray(payload?.data?.topics)) {
-          state.list = payload.data.topics;
-        } else {
-          state.list = [];
-        }
+        state.list = Array.isArray(payload?.data?.topics)
+          ? payload.data.topics
+          : Array.isArray(payload)
+          ? payload
+          : [];
       })
-
       .addCase(fetchTopics.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
@@ -82,7 +97,21 @@ const topicsSlice = createSlice({
       })
 
       .addCase(deleteTopic.fulfilled, (state, action) => {
-        state.list = state.list.filter((t) => t.id !== action.payload);
+        state.list = state.list.filter(
+          (t) => t.id !== action.payload
+        );
+      })
+
+      .addCase(generateTopics.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(generateTopics.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.list = action.payload;
+      })
+      .addCase(generateTopics.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
       });
   },
 });

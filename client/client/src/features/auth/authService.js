@@ -1,8 +1,8 @@
 import api from "../../services/api";
 
-export const loginAPI = async (data) => {
-  const res = await api.post("/auth/login", data);
-  return res.data;
+export const loginAPI = async (payload) => {
+  const res = await api.post("/auth/login", payload);
+  return res.data.data;
 };
 
 export const registerAPI = async (data) => {
@@ -11,6 +11,6 @@ export const registerAPI = async (data) => {
 };
 
 export const meAPI = async () => {
-  const res = await api.get("/auth/me");
-  return res.data;
+  const response = await api.get("/auth/me");
+  return response.data;
 };

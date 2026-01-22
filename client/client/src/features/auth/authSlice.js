@@ -48,9 +48,18 @@ const authSlice = createSlice({
     builder
       .addCase(login.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
-        const { token, user } = action.payload.data; // ✅ BENAR
+        const { token, user } = action.payload;
+
+        if (!token) {
+          console.error("LOGIN SUCCESS BUT TOKEN MISSING", action.payload);
+          state.isLoading = false;
+          state.error = "Token missing from login response";
+          return;
+        }
+
         state.isLoading = false;
         state.token = token;
         state.user = user;
@@ -61,9 +70,20 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
+      .addCase(fetchMe.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(fetchMe.fulfilled, (state, action) => {
+        state.isLoading = false;
         state.user = action.payload;
         state.isAuth = true;
+      })
+      .addCase(fetchMe.rejected, (state) => {
+        state.isLoading = false;
+        state.user = null;
+        state.token = null;
+        state.isAuth = false;
+        localStorage.removeItem("token");
       });
   },
 });

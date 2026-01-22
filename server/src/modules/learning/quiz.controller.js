@@ -36,6 +36,7 @@ const generateAndSaveQuiz = async (req, res, next) => {
         topicId,
         level: savedQuiz.level,
         totalQuestions: quiz.length,
+        quiz, 
       },
       201
     )

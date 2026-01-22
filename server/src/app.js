@@ -3,10 +3,9 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 
-// load associations sekali
 require('./models/associations')
 
-const routes = require('./routes/index') // ⬅️ PENTING
+const routes = require('./routes/index') 
 const errorMiddleware = require('./middlewares/error.middleware')
 
 const app = express()
