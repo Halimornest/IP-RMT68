@@ -17,11 +17,12 @@ const User = sequelize.define(
     },
     passwordHash: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     provider: {
-      type: DataTypes.ENUM('local', 'google'),
-      defaultValue: 'local',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'local', 
     },
     role: {
       type: DataTypes.ENUM('student', 'admin'),

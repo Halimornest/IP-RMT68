@@ -1,16 +1,13 @@
 const express = require('express')
 const router = express.Router()
 const authMiddleware = require('../../middlewares/auth.middleware')
-const {
-  generateAndSaveQuiz,
-  submitQuizAnswers,
-} = require('./quiz.controller')
-const { explainQuestion } = require('./quiz.controller')
+const controller = require('./quiz.controller')
 
 router.use(authMiddleware)
 
-router.post('/generate-and-save', generateAndSaveQuiz)
-router.post('/submit', submitQuizAnswers)
-router.post('/explain', authMiddleware, explainQuestion)
+router.post('/generate-and-save', controller.generateAndSaveQuiz)
+router.post('/submit', controller.submitQuizAnswers)
+router.post('/explain', controller.explainQuestion)
+router.get('/history/:topicId', controller.getQuizHistory)
 
 module.exports = router

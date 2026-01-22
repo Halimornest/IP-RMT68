@@ -27,7 +27,7 @@ const Login = () => {
         style={{ width: 360 }}
         onSubmit={handleSubmit}
       >
-        <h3 className="text-center mb-2">Welcome Back 👋</h3>
+        <h3 className="text-center mb-2">Welcome Back</h3>
         <p className="text-center text-muted mb-4">
           Log in to continue your AI-powered learning journey.
         </p>
@@ -53,6 +53,17 @@ const Login = () => {
           disabled={isLoading}
         >
           {isLoading ? "Signing in..." : "Sign In"}
+        </button>
+
+        <button
+          type="button"
+          className="btn btn-danger w-100 mt-3"
+          onClick={() =>
+            (window.location.href =
+              "http://localhost:3000/api/auth/google")
+          }
+        >
+          Continue with Google
         </button>
 
         {error && (

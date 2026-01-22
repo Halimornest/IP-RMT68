@@ -1,5 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getQuizAPI, submitQuizAPI } from "./quizService";
+import {
+  getQuizAPI,
+  submitQuizAPI,
+  explainAnswerAPI,
+  getQuizHistoryAPI,
+} from "./quizService";
 
 const initialState = {
   quizId: null,
@@ -7,6 +12,11 @@ const initialState = {
   answers: {},
   isLoading: false,
   score: null,
+  details: [],
+  explanations: {},
+  explainingIndex: null,
+  history: [],
+
   error: null,
 };
 
@@ -32,15 +42,9 @@ export const submitQuiz = createAsyncThunk(
       return thunkAPI.rejectWithValue("Quiz ID missing");
     }
 
-    const answers = quiz.questions.map((q, index) => {
-      const questionKey = q.id || q._id || `${index}-${q.question}`;
-
-      return {
-        question: q.question,
-        selectedOption: quiz.answers[questionKey],
-        correctOption: q.answer,
-      };
-    });
+    const answers = quiz.questions.map((q, index) => ({
+      selectedOption: quiz.answers[index],
+    }));
 
     return await submitQuizAPI({
       quizId: quiz.quizId,
@@ -49,16 +53,53 @@ export const submitQuiz = createAsyncThunk(
   }
 );
 
+export const explainAnswer = createAsyncThunk(
+  "quiz/explain",
+  async ({ detail, index }) => {
+    const payload = {
+      question: detail.question,
+      options: detail.options,
+      correctOptionIndex: detail.options.findIndex(
+        (o) => o === detail.correctOption
+      ),
+      selectedOptionIndex: detail.options.findIndex(
+        (o) => o === detail.selectedOption
+      ),
+      level: "beginner",
+    };
+
+    const explanation = await explainAnswerAPI(payload);
+    return { index, explanation };
+  }
+);
+
+export const fetchQuizHistory = createAsyncThunk(
+  "quiz/history",
+  async (topicId) => {
+    return await getQuizHistoryAPI(topicId);
+  }
+);
+
 const quizSlice = createSlice({
   name: "quiz",
   initialState,
   reducers: {
     selectAnswer(state, action) {
-      const { questionId, option } = action.payload;
-      state.answers[questionId] = option;
+      state.answers[action.payload.index] = action.payload.option;
     },
     resetQuiz() {
-      return initialState;
+      return {
+        quizId: null,
+        questions: [],
+        answers: {},
+        isLoading: false,
+        score: null,
+        details: [],
+        explanations: {},
+        explainingIndex: null,
+        history: [],
+        error: null,
+      };
     },
   },
   extraReducers: (builder) => {
@@ -71,23 +112,30 @@ const quizSlice = createSlice({
       })
       .addCase(fetchQuiz.fulfilled, (state, action) => {
         state.isLoading = false;
-
-        state.quizId = action.payload?.data?.quizId || null;
-        state.questions = Array.isArray(action.payload?.data?.quiz)
-          ? action.payload.data.quiz
-          : [];
+        state.quizId = action.payload.data.quizId;
+        state.questions = action.payload.data.quiz;
       })
       .addCase(fetchQuiz.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
-        state.questions = [];
-        state.quizId = null;
       })
       .addCase(submitQuiz.fulfilled, (state, action) => {
-        state.score = action.payload?.data?.score ?? null;
+        state.score = action.payload.data.score;
+        state.details = action.payload.data.details;
       })
       .addCase(submitQuiz.rejected, (state, action) => {
         state.error = action.payload;
+      })
+      .addCase(explainAnswer.pending, (state, action) => {
+        state.explainingIndex = action.meta.arg.index;
+      })
+      .addCase(explainAnswer.fulfilled, (state, action) => {
+        state.explainingIndex = null;
+        state.explanations[action.payload.index] =
+          action.payload.explanation;
+      })
+      .addCase(fetchQuizHistory.fulfilled, (state, action) => {
+        state.history = action.payload;
       });
   },
 });

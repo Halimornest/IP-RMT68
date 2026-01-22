@@ -6,6 +6,7 @@ import {
   selectAnswer,
   submitQuiz,
   resetQuiz,
+  explainAnswer,
 } from "../features/quiz/quizSlice";
 
 const Quiz = () => {
@@ -18,6 +19,9 @@ const Quiz = () => {
     answers,
     isLoading,
     score,
+    details,
+    explanations,
+    explainingIndex,
     error,
   } = useSelector((s) => s.quiz);
 
@@ -40,7 +44,7 @@ const Quiz = () => {
       <div className="container py-5 text-center">
         <div className="alert alert-danger">{error}</div>
         <button
-          className="btn btn-outline-secondary"
+          className="btn btn-outline-secondary mt-3"
           onClick={() => navigate("/topics")}
         >
           Back to Topics
@@ -51,14 +55,14 @@ const Quiz = () => {
 
   if (score !== null) {
     return (
-      <div className="container py-5 text-center">
-        <h2 className="mb-3">Your Score</h2>
+      <div className="container py-5">
+        <h2 className="mb-4 text-center">Your Score</h2>
 
-        <div className="display-1 fw-bold mb-3">
+        <div className="display-3 fw-bold text-center mb-4">
           {score}
         </div>
 
-        <div className="progress mb-4" style={{ height: 12 }}>
+        <div className="progress mb-5" style={{ height: 12 }}>
           <div
             className={`progress-bar ${
               score >= 70 ? "bg-success" : "bg-warning"
@@ -67,101 +71,128 @@ const Quiz = () => {
           />
         </div>
 
-        <p className="text-muted mb-4">
-          {score >= 70
-            ? "Great job! 🎉"
-            : "Keep practicing, you’ll get better 💪"}
-        </p>
+        {details.map((d, i) => (
+          <div key={i} className="card mb-3 shadow-sm">
+            <div className="card-body">
+              <p className="fw-bold">{d.question}</p>
 
-        <div className="d-flex gap-2 justify-content-center">
+              <p>
+                Your answer:{" "}
+                <b className={d.isCorrect ? "text-success" : "text-danger"}>
+                  {d.selectedOption || "-"}
+                </b>
+              </p>
+
+              <p>
+                Correct answer:{" "}
+                <b className="text-success">{d.correctOption}</b>
+              </p>
+
+              {!d.isCorrect && (
+                <>
+                  <button
+                    className="btn btn-sm btn-outline-primary"
+                    onClick={() =>
+                      dispatch(
+                        explainAnswer({
+                          detail: d,
+                          index: i,
+                        })
+                      )
+                    }
+                  >
+                    Explain with AI
+                  </button>
+
+                  {explainingIndex === i && (
+                    <p className="text-muted mt-2">
+                      Explaining…
+                    </p>
+                  )}
+
+                  {explanations[i] && (
+                    <div className="alert alert-info mt-2">
+                      {explanations[i]}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+
+        <div className="text-center mt-4">
           <button
-            className="btn btn-primary"
-            onClick={() => navigate("/")}
-          >
-            Back to Dashboard
-          </button>
-          <button
-            className="btn btn-outline-secondary"
+            className="btn btn-primary me-2"
             onClick={() => navigate("/topics")}
           >
             Back to Topics
           </button>
+          <button
+            className="btn btn-outline-secondary"
+            onClick={() => navigate("/")}
+          >
+            Dashboard
+          </button>
         </div>
-      </div>
-    );
-  }
-
-  if (!Array.isArray(questions) || questions.length === 0) {
-    return (
-      <div className="container py-5 text-center">
-        <p>No quiz available for this topic.</p>
-        <button
-          className="btn btn-outline-secondary"
-          onClick={() => navigate("/topics")}
-        >
-          Back to Topics
-        </button>
       </div>
     );
   }
 
   const answeredCount = Object.keys(answers).length;
   const total = questions.length;
-  const progress = Math.round((answeredCount / total) * 100);
   const allAnswered = answeredCount === total;
 
   return (
     <div className="container py-5">
-      <div className="mb-4">
-        <h2 className="mb-2">Quiz</h2>
-        <div className="progress" style={{ height: 8 }}>
-          <div
-            className="progress-bar"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <small className="text-muted">
-          Answered {answeredCount} / {total}
-        </small>
+      <h2 className="mb-4">Quiz</h2>
+
+      <div className="progress mb-3" style={{ height: 8 }}>
+        <div
+          className="progress-bar"
+          style={{
+            width: `${Math.round((answeredCount / total) * 100)}%`,
+          }}
+        />
       </div>
 
-      {questions.map((q, index) => {
-        const key = q.id || q._id || `${index}-${q.question}`;
+      <small className="text-muted mb-4 d-block">
+        Answered {answeredCount} / {total}
+      </small>
 
-        return (
-          <div key={key} className="card mb-4 shadow-sm">
-            <div className="card-body">
-              <h5 className="mb-3">
-                {index + 1}. {q.question}
-              </h5>
+      {questions.map((q, index) => (
+        <div key={index} className="card mb-4 shadow-sm">
+          <div className="card-body">
+            <h5 className="mb-3">
+              {index + 1}. {q.question}
+            </h5>
 
-              {q.options.map((opt, optIndex) => (
-                <div className="form-check mb-2" key={optIndex}>
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name={key}
-                    checked={answers[key] === opt}
-                    onChange={() =>
-                      dispatch(
-                        selectAnswer({
-                          questionId: key,
-                          option: opt,
-                        })
-                      )
-                    }
-                  />
-                  <label className="form-check-label">
-                    {opt}
-                  </label>
-                </div>
-              ))}
-            </div>
+            {q.options.map((opt, i) => (
+              <div className="form-check mb-2" key={i}>
+                <input
+                  type="radio"
+                  className="form-check-input"
+                  name={`q-${index}`}
+                  checked={answers[index] === opt}
+                  onChange={() =>
+                    dispatch(
+                      selectAnswer({
+                        index,
+                        option: opt,
+                      })
+                    )
+                  }
+                />
+                <label className="form-check-label">
+                  {opt}
+                </label>
+              </div>
+            ))}
           </div>
-        );
-      })}
+        </div>
+      ))}
 
-      <div className="d-flex justify-content-between align-items-center">
+      <div className="d-flex justify-content-between align-items-center mt-4">
         <button
           className="btn btn-outline-secondary"
           onClick={() => navigate("/topics")}
@@ -170,11 +201,12 @@ const Quiz = () => {
         </button>
 
         <button
+          type="button"
           className="btn btn-success btn-lg"
-          disabled={!allAnswered || isLoading}
+          disabled={!allAnswered}
           onClick={() => dispatch(submitQuiz())}
         >
-          {isLoading ? "Submitting..." : "Submit Quiz"}
+          Submit Quiz
         </button>
       </div>
 

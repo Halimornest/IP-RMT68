@@ -1,4 +1,8 @@
-const { saveQuiz, submitQuiz } = require('./quiz.service')
+const {
+  saveQuiz,
+  submitQuiz,
+  getQuizHistoryByTopic,
+} = require('./quiz.service')
 const aiService = require('../ai/ai.service')
 
 const { successResponse } = require('../../utils/response')
@@ -8,7 +12,6 @@ const ApiError = require('../../utils/ApiError')
 const generateAndSaveQuiz = async (req, res, next) => {
   try {
     requireFields(['topicId'], req.body)
-
     const { topicId, level = 'beginner', count = 5 } = req.body
 
     requireUUID(topicId, 'topicId')
@@ -23,23 +26,15 @@ const generateAndSaveQuiz = async (req, res, next) => {
       throw new ApiError(500, 'Failed to generate quiz')
     }
 
-    const savedQuiz = await saveQuiz({
+    const savedQuiz = await saveQuiz({ topicId, level, quiz })
+
+    return successResponse(res, {
+      quizId: savedQuiz.id,
       topicId,
       level,
+      totalQuestions: quiz.length,
       quiz,
-    })
-
-    return successResponse(
-      res,
-      {
-        quizId: savedQuiz.id,
-        topicId,
-        level: savedQuiz.level,
-        totalQuestions: quiz.length,
-        quiz, 
-      },
-      201
-    )
+    }, 201)
   } catch (err) {
     next(err)
   }
@@ -54,10 +49,6 @@ const submitQuizAnswers = async (req, res, next) => {
 
     requireUUID(quizId, 'quizId')
 
-    if (!Array.isArray(answers)) {
-      throw new ApiError(400, 'answers must be an array')
-    }
-
     const result = await submitQuiz({
       quizId,
       userId,
@@ -70,41 +61,35 @@ const submitQuizAnswers = async (req, res, next) => {
   }
 }
 
-async function explainQuestion(req, res, next) {
+const explainQuestion = async (req, res, next) => {
   try {
-    requireFields(
-      [
-        'question',
-        'options',
-        'correctOptionIndex',
-        'selectedOptionIndex',
-      ],
-      req.body
-    )
+    requireFields([
+      'question',
+      'options',
+      'correctOptionIndex',
+      'selectedOptionIndex',
+    ], req.body)
 
-    const {
-      question,
-      options,
-      correctOptionIndex,
-      selectedOptionIndex,
-      level = 'beginner',
-    } = req.body
+    const explanation = await aiService.generateExplanation(req.body)
+    return successResponse(res, { explanation })
+  } catch (err) {
+    next(err)
+  }
+}
 
-    if (!Array.isArray(options)) {
-      throw new ApiError(400, 'options must be an array')
-    }
+const getQuizHistory = async (req, res, next) => {
+  try {
+    const { topicId } = req.params
+    const userId = req.user.id
 
-    const explanation = await aiService.generateExplanation({
-      question,
-      options,
-      correctOptionIndex,
-      selectedOptionIndex,
-      level,
+    requireUUID(topicId, 'topicId')
+
+    const history = await getQuizHistoryByTopic({
+      topicId,
+      userId,
     })
 
-    return successResponse(res, {
-      explanation,
-    })
+    return successResponse(res, { topicId, history })
   } catch (err) {
     next(err)
   }
@@ -114,4 +99,5 @@ module.exports = {
   generateAndSaveQuiz,
   submitQuizAnswers,
   explainQuestion,
+  getQuizHistory,
 }

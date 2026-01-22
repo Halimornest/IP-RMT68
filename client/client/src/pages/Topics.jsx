@@ -5,13 +5,16 @@ import {
   fetchTopics,
   generateTopics,
 } from "../features/topics/topicsSlice";
+import { fetchQuizHistory } from "../features/quiz/quizSlice";
 
 const Topics = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
   const { list, isLoading, error } = useSelector(
     (s) => s.topics
   );
+  const { history } = useSelector((s) => s.quiz);
 
   const [subject, setSubject] = useState("");
   const [level, setLevel] = useState("beginner");
@@ -24,27 +27,25 @@ const Topics = () => {
     e.preventDefault();
     if (!subject.trim()) return;
     dispatch(generateTopics({ subject, level }));
+    setSubject("");
   };
 
   return (
     <div className="container py-5">
-      <h2>Your Learning Topics 📚</h2>
+      <h2>Your Learning Topics</h2>
       <p className="text-muted mb-4">
-        Select a topic below to start learning and test your
-        understanding with a quiz.
+        Generate learning topics with AI, then test yourself with quizzes.
       </p>
 
       <div className="card mb-4 shadow-sm">
         <div className="card-body">
-          <h5>Create New Topics with AI</h5>
-          <form
-            className="row g-2 mt-2"
-            onSubmit={handleGenerate}
-          >
+          <h5>Create Topics with AI</h5>
+
+          <form className="row g-2 mt-2" onSubmit={handleGenerate}>
             <div className="col-md-6">
               <input
                 className="form-control"
-                placeholder="Enter a subject you want to learn"
+                placeholder="e.g. React, Biology, Calculus"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
               />
@@ -57,9 +58,7 @@ const Topics = () => {
                 onChange={(e) => setLevel(e.target.value)}
               >
                 <option value="beginner">Beginner</option>
-                <option value="intermediate">
-                  Intermediate
-                </option>
+                <option value="intermediate">Intermediate</option>
                 <option value="advanced">Advanced</option>
               </select>
             </div>
@@ -82,8 +81,7 @@ const Topics = () => {
 
       {list.length === 0 && !isLoading && (
         <p className="text-muted">
-          No topics available yet. Generate one to get
-          started 👆
+          No topics yet. Generate one to get started.
         </p>
       )}
 
@@ -94,17 +92,37 @@ const Topics = () => {
             className="list-group-item d-flex justify-content-between align-items-center"
           >
             <span>{topic.title}</span>
-            <button
-              className="btn btn-sm btn-success"
-              onClick={() =>
-                navigate(`/quiz/${topic.id}`)
-              }
-            >
-              Start Quiz →
-            </button>
+
+            <div className="d-flex gap-2">
+              <button
+                className="btn btn-sm btn-success"
+                onClick={() =>
+                  navigate(`/quiz/${topic.id}`)
+                }
+              >
+                Start Quiz
+              </button>
+            </div>
           </li>
         ))}
       </ul>
+
+      {history.length > 0 && (
+        <div className="mt-5">
+          <h5>Quiz History</h5>
+          <ul className="list-group">
+            {history.map((h, i) => (
+              <li
+                key={i}
+                className="list-group-item d-flex justify-content-between"
+              >
+                <span>Attempt #{history.length - i}</span>
+                <strong>Score: {h.score}</strong>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

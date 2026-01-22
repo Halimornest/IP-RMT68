@@ -43,7 +43,14 @@ const authSlice = createSlice({
       state.isAuth = false;
       localStorage.removeItem("token");
     },
+
+    loginSuccess(state, action) {
+      state.token = action.payload;
+      state.isAuth = true;
+      localStorage.setItem("token", action.payload);
+    },
   },
+
   extraReducers: (builder) => {
     builder
       .addCase(login.pending, (state) => {
@@ -52,13 +59,6 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         const { token, user } = action.payload;
-
-        if (!token) {
-          console.error("LOGIN SUCCESS BUT TOKEN MISSING", action.payload);
-          state.isLoading = false;
-          state.error = "Token missing from login response";
-          return;
-        }
 
         state.isLoading = false;
         state.token = token;
@@ -88,5 +88,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, loginSuccess } = authSlice.actions;
 export default authSlice.reducer;
