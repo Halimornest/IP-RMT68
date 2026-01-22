@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   fetchTopicProgress,
   fetchQuizHistory,
-  resetProgress,
+  fetchTopicVideos,
 } from "../features/progress/progressSlice";
 
 const ProgressDetail = () => {
@@ -12,17 +12,25 @@ const ProgressDetail = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { detail, history, isLoading } = useSelector(
-    (s) => s.progress
-  );
+  const {
+    detail,
+    history,
+    videos,
+    loadingDetail,
+    loadingHistory,
+    loadingVideos,
+  } = useSelector((s) => s.progress);
 
   useEffect(() => {
-    dispatch(resetProgress());
     dispatch(fetchTopicProgress(topicId));
     dispatch(fetchQuizHistory(topicId));
+    dispatch(fetchTopicVideos(topicId));
   }, [topicId, dispatch]);
 
-  if (isLoading || !detail) {
+  const safeHistory = Array.isArray(history) ? history : [];
+  const safeVideos = Array.isArray(videos) ? videos : [];
+
+  if (loadingDetail || !detail) {
     return (
       <div className="container py-5 text-center">
         <div className="spinner-border text-primary" />
@@ -32,7 +40,7 @@ const ProgressDetail = () => {
 
   return (
     <div className="container py-5">
-      <h2 className="mb-3">{detail.title}</h2>
+      <h2 className="mb-4">{detail.title}</h2>
 
       <div className="row mb-4">
         <div className="col-md-3">
@@ -43,6 +51,7 @@ const ProgressDetail = () => {
             </div>
           </div>
         </div>
+
         <div className="col-md-3">
           <div className="card text-center">
             <div className="card-body">
@@ -51,6 +60,7 @@ const ProgressDetail = () => {
             </div>
           </div>
         </div>
+
         <div className="col-md-3">
           <div className="card text-center">
             <div className="card-body">
@@ -59,11 +69,12 @@ const ProgressDetail = () => {
             </div>
           </div>
         </div>
+
         <div className="col-md-3">
           <div className="card text-center">
             <div className="card-body">
               <h6>Status</h6>
-              <span className="badge bg-info">
+              <span className="badge bg-warning">
                 {detail.status}
               </span>
             </div>
@@ -71,23 +82,23 @@ const ProgressDetail = () => {
         </div>
       </div>
 
-      <h4 className="mb-3">Quiz History</h4>
+      <h4 className="mb-3">📝 Quiz History</h4>
 
-      {history.length === 0 ? (
+      {loadingHistory && <p>Loading quiz history...</p>}
+
+      {!loadingHistory && safeHistory.length === 0 ? (
         <div className="alert alert-secondary">
           No quiz attempts yet.
         </div>
       ) : (
-        <ul className="list-group mb-4">
-          {history.map((h, i) => (
+        <ul className="list-group mb-5">
+          {safeHistory.map((h, i) => (
             <li
               key={i}
               className="list-group-item d-flex justify-content-between"
             >
-              <span>
-                Attempt #{history.length - i}
-              </span>
-              <span className="fw-bold">
+              <span>Attempt #{safeHistory.length - i}</span>
+              <span className="fw-bold text-danger">
                 Score: {h.score}
               </span>
             </li>
@@ -108,6 +119,42 @@ const ProgressDetail = () => {
         >
           Continue Quiz
         </button>
+      </div>
+
+      <h4 className="mb-3">📺 Recommended Videos</h4>
+
+      {loadingVideos && <p>Loading videos...</p>}
+
+      {!loadingVideos && safeVideos.length === 0 && (
+        <div className="alert alert-secondary">
+          No recommended videos available.
+        </div>
+      )}
+
+      <div className="row mb-5">
+        {safeVideos.map((v) => (
+          <div className="col-md-4" key={v.videoId}>
+            <div className="card h-100 shadow-sm">
+              <img
+                src={v.thumbnail}
+                className="card-img-top"
+                alt={v.title}
+              />
+              <div className="card-body d-flex flex-column">
+                <h6>{v.title}</h6>
+                <p className="text-muted">{v.channel}</p>
+                <a
+                  href={`https://www.youtube.com/watch?v=${v.videoId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-danger btn-sm mt-auto"
+                >
+                  Watch on YouTube
+                </a>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -127,12 +127,10 @@ const Dashboard = () => {
                 </td>
                 <td>
                   <button
-                    className="btn btn-sm btn-outline-secondary me-2"
-                    onClick={() =>
-                      navigate(`/progress/history/${p.topicId}`)
-                    }
+                    className="btn btn-outline-secondary"
+                    onClick={() => navigate(`/progress/topic/${p.topicId}`)}
                   >
-                    History
+                    Progress
                   </button>
                   <button
                     className="btn btn-sm btn-success"

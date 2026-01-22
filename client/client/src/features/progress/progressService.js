@@ -14,3 +14,8 @@ export const getQuizHistoryAPI = async (topicId) => {
   const res = await api.get(`/progress/history/${topicId}`);
   return res.data.data;
 };
+
+export const getTopicVideosAPI = async (topicId) => {
+  const res = await api.get(`/learning/videos/${topicId}`);
+  return res.data.data;
+};

@@ -67,15 +67,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        <Route
-          path="/progress/history/:topicId"
-          element={
-            <ProtectedRoute>
-              <QuizHistory />
-            </ProtectedRoute>
-          }
-        />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
       </Routes>
     </BrowserRouter>

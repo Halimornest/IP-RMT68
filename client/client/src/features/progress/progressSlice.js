@@ -3,6 +3,7 @@ import {
   getTopicProgressAPI,
   getQuizHistoryAPI,
   getMyProgressAPI,
+  getTopicVideosAPI,
 } from "./progressService";
 
 const initialState = {
@@ -15,6 +16,9 @@ const initialState = {
   history: [],
   loadingHistory: false,
 
+  videos: [],
+  loadingVideos: false,
+
   error: null,
 };
 
@@ -24,9 +28,7 @@ export const fetchMyProgress = createAsyncThunk(
     try {
       return await getMyProgressAPI();
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err?.response?.data?.message || "Failed to load my progress"
-      );
+      return thunkAPI.rejectWithValue("Failed to load my progress");
     }
   }
 );
@@ -37,9 +39,7 @@ export const fetchTopicProgress = createAsyncThunk(
     try {
       return await getTopicProgressAPI(topicId);
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err?.response?.data?.message || "Failed to load topic progress"
-      );
+      return thunkAPI.rejectWithValue("Failed to load topic progress");
     }
   }
 );
@@ -50,9 +50,18 @@ export const fetchQuizHistory = createAsyncThunk(
     try {
       return await getQuizHistoryAPI(topicId);
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err?.response?.data?.message || "Failed to load quiz history"
-      );
+      return thunkAPI.rejectWithValue("Failed to load quiz history");
+    }
+  }
+);
+
+export const fetchTopicVideos = createAsyncThunk(
+  "progress/fetchVideos",
+  async (topicId, thunkAPI) => {
+    try {
+      return await getTopicVideosAPI(topicId);
+    } catch (err) {
+      return thunkAPI.rejectWithValue("Failed to load videos");
     }
   }
 );
@@ -60,52 +69,60 @@ export const fetchQuizHistory = createAsyncThunk(
 const progressSlice = createSlice({
   name: "progress",
   initialState,
-  reducers: {
-    resetProgress: () => initialState,
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
 
       .addCase(fetchMyProgress.pending, (state) => {
         state.loadingList = true;
-        state.error = null;
       })
       .addCase(fetchMyProgress.fulfilled, (state, action) => {
         state.loadingList = false;
-        state.list = action.payload;
+        state.list = action.payload || [];
       })
-      .addCase(fetchMyProgress.rejected, (state, action) => {
+      .addCase(fetchMyProgress.rejected, (state) => {
         state.loadingList = false;
-        state.error = action.payload;
       })
-
       .addCase(fetchTopicProgress.pending, (state) => {
         state.loadingDetail = true;
-        state.error = null;
       })
       .addCase(fetchTopicProgress.fulfilled, (state, action) => {
         state.loadingDetail = false;
         state.detail = action.payload;
       })
-      .addCase(fetchTopicProgress.rejected, (state, action) => {
+      .addCase(fetchTopicProgress.rejected, (state) => {
         state.loadingDetail = false;
-        state.error = action.payload;
+        state.detail = null;
       })
-      
+
       .addCase(fetchQuizHistory.pending, (state) => {
         state.loadingHistory = true;
-        state.error = null;
       })
       .addCase(fetchQuizHistory.fulfilled, (state, action) => {
         state.loadingHistory = false;
-        state.history = action.payload;
+        state.history = Array.isArray(action.payload)
+          ? action.payload
+          : [];
       })
-      .addCase(fetchQuizHistory.rejected, (state, action) => {
+      .addCase(fetchQuizHistory.rejected, (state) => {
         state.loadingHistory = false;
-        state.error = action.payload;
+        state.history = [];
+      })
+
+      .addCase(fetchTopicVideos.pending, (state) => {
+        state.loadingVideos = true;
+      })
+      .addCase(fetchTopicVideos.fulfilled, (state, action) => {
+        state.loadingVideos = false;
+        state.videos = Array.isArray(action.payload?.videos)
+          ? action.payload.videos
+          : [];
+      })
+      .addCase(fetchTopicVideos.rejected, (state) => {
+        state.loadingVideos = false;
+        state.videos = [];
       });
   },
 });
 
-export const { resetProgress } = progressSlice.actions;
 export default progressSlice.reducer;
