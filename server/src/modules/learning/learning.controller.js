@@ -1,5 +1,5 @@
 const { successResponse } = require('../../utils/response')
-const { requireUUID, requireFields } = require('../../utils/validation')
+const { requireUUID, requireFields } = require('../../utils/validation') // ⬅️ WAJIB
 const ApiError = require('../../utils/ApiError')
 const learningService = require('./learning.service')
 const Topic = require('./topic.model')
@@ -66,25 +66,52 @@ async function getProgress(req, res, next) {
 
 async function getTopicVideos(req, res, next) {
   try {
-    const { topicId } = req.params
-    requireUUID(topicId, 'topicId')
+    const { topicId } = req.params;
 
-    const topic = await Topic.findByPk(topicId)
-    if (!topic) throw new ApiError(404, 'Topic not found')
+    if (!process.env.YOUTUBE_API_KEY) {
+      return res.json({
+        success: true,
+        data: {
+          topicId,
+          title: "Unknown Topic",
+          videos: [],
+        },
+      });
+    }
+
+    const progress = await learningService.getTopicProgress({
+      userId: req.user.id,
+      topicId,
+    });
+
+    if (!progress) {
+      return res.status(404).json({
+        success: false,
+        message: "Topic progress not found",
+      });
+    }
 
     const videos = await youtubeService.searchVideos({
-      query: `${topic.title} tutorial`,
+      query: `${progress.title || "learning"} tutorial`,
       maxResults: 3,
-    })
+    });
 
-    return successResponse(res, {
-      topicId,
-      title: topic.title,
-      videos,
-    })
+    return res.json({
+      success: true,
+      data: {
+        topicId,
+        title: progress.title,
+        videos,
+      },
+    });
   } catch (err) {
-    next(err)
+    console.error("YOUTUBE ERROR:", err.message);
+    next(err);
   }
+}
+
+module.exports = {
+  getTopicVideos,
 }
 
 module.exports = {

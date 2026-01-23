@@ -8,7 +8,7 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { list, isLoading } = useSelector((s) => s.progress);
+  const { list = [], loadingList } = useSelector((s) => s.progress);
 
   const [subject, setSubject] = useState("");
   const [level, setLevel] = useState("beginner");
@@ -23,12 +23,18 @@ const Dashboard = () => {
     navigate("/topics");
   };
 
-  const totalAttempts = list.reduce((sum, t) => sum + t.attempts, 0);
-  const completed = list.filter((t) => t.status === "completed").length;
+  const totalAttempts = list.reduce(
+    (sum, item) => sum + (item.attempts || 0),
+    0
+  );
+
+  const completed = list.filter(
+    (item) => item.status === "completed"
+  ).length;
 
   return (
     <div className="container py-5">
-      <h1 className="fw-bold mb-2">AI Learning Dashboard 🚀</h1>
+      <h1 className="fw-bold mb-2">AI Learning Dashboard 🧑‍🏫</h1>
       <p className="text-muted mb-4">
         Generate topics with AI and track your learning progress.
       </p>
@@ -43,6 +49,7 @@ const Dashboard = () => {
               onChange={(e) => setSubject(e.target.value)}
             />
           </div>
+
           <div className="col-md-3">
             <select
               className="form-select"
@@ -54,6 +61,7 @@ const Dashboard = () => {
               <option value="advanced">Advanced</option>
             </select>
           </div>
+
           <div className="col-md-3 d-grid">
             <button className="btn btn-primary" onClick={handleGenerate}>
               Generate Topics
@@ -71,6 +79,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+
         <div className="col-md-4">
           <div className="card text-center">
             <div className="card-body">
@@ -79,6 +88,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+
         <div className="col-md-4">
           <div className="card text-center">
             <div className="card-body">
@@ -91,21 +101,21 @@ const Dashboard = () => {
 
       <h4 className="mb-3">My Learning Progress</h4>
 
-      {isLoading ? (
+      {loadingList ? (
         <p>Loading...</p>
       ) : list.length === 0 ? (
         <div className="alert alert-info">
           You haven't completed any quizzes yet.
         </div>
       ) : (
-        <table className="table table-bordered">
-          <thead>
+        <table className="table table-bordered align-middle">
+          <thead className="table-light">
             <tr>
               <th>Topic</th>
               <th>Attempts</th>
               <th>Best Score</th>
               <th>Status</th>
-              <th>Action</th>
+              <th style={{ width: 180 }}>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -125,17 +135,20 @@ const Dashboard = () => {
                     {p.status}
                   </span>
                 </td>
-                <td>
+                <td className="d-flex gap-2">
                   <button
-                    className="btn btn-outline-secondary"
-                    onClick={() => navigate(`/progress/topic/${p.topicId}`)}
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() =>
+                      navigate(`/progress/topic/${p.topicId}`)
+                    }
                   >
-                    Progress
+                    History
                   </button>
+
                   <button
                     className="btn btn-sm btn-success"
                     onClick={() =>
-                      navigate(`/quiz/start/${p.topicId}`)
+                      navigate(`/quiz/${p.topicId}`)
                     }
                   >
                     Continue

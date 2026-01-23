@@ -1,6 +1,7 @@
 const axios = require('axios')
 
 const YOUTUBE_API = 'https://www.googleapis.com/youtube/v3/search'
+console.log('YT KEY:', process.env.YOUTUBE_API_KEY)
 
 async function searchVideos({ query, maxResults = 3 }) {
   const res = await axios.get(YOUTUBE_API, {

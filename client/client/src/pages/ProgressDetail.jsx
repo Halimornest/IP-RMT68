@@ -22,10 +22,17 @@ const ProgressDetail = () => {
   } = useSelector((s) => s.progress);
 
   useEffect(() => {
+    if (!topicId) return;
+
     dispatch(fetchTopicProgress(topicId));
     dispatch(fetchQuizHistory(topicId));
-    dispatch(fetchTopicVideos(topicId));
   }, [topicId, dispatch]);
+
+  useEffect(() => {
+    if (detail?.topicId && videos.length === 0) {
+      dispatch(fetchTopicVideos(detail.topicId));
+    }
+  }, [detail, videos.length, dispatch]);
 
   const safeHistory = Array.isArray(history) ? history : [];
   const safeVideos = Array.isArray(videos) ? videos : [];
@@ -34,6 +41,7 @@ const ProgressDetail = () => {
     return (
       <div className="container py-5 text-center">
         <div className="spinner-border text-primary" />
+        <p className="mt-3">Loading progress...</p>
       </div>
     );
   }
@@ -43,40 +51,26 @@ const ProgressDetail = () => {
       <h2 className="mb-4">{detail.title}</h2>
 
       <div className="row mb-4">
-        <div className="col-md-3">
-          <div className="card text-center">
-            <div className="card-body">
-              <h6>Attempts</h6>
-              <h3>{detail.attempts}</h3>
+        {[
+          ["Attempts", detail.attempts],
+          ["Best Score", detail.bestScore],
+          ["Average", detail.averageScore],
+        ].map(([label, value]) => (
+          <div className="col-md-3" key={label}>
+            <div className="card text-center">
+              <div className="card-body">
+                <h6>{label}</h6>
+                <h3>{value}</h3>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="col-md-3">
-          <div className="card text-center">
-            <div className="card-body">
-              <h6>Best Score</h6>
-              <h3>{detail.bestScore}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-3">
-          <div className="card text-center">
-            <div className="card-body">
-              <h6>Average</h6>
-              <h3>{detail.averageScore}</h3>
-            </div>
-          </div>
-        </div>
+        ))}
 
         <div className="col-md-3">
           <div className="card text-center">
             <div className="card-body">
               <h6>Status</h6>
-              <span className="badge bg-warning">
-                {detail.status}
-              </span>
+              <span className="badge bg-warning">{detail.status}</span>
             </div>
           </div>
         </div>
@@ -84,42 +78,29 @@ const ProgressDetail = () => {
 
       <h4 className="mb-3">📝 Quiz History</h4>
 
-      {loadingHistory && <p>Loading quiz history...</p>}
-
-      {!loadingHistory && safeHistory.length === 0 ? (
-        <div className="alert alert-secondary">
-          No quiz attempts yet.
-        </div>
+      {loadingHistory ? (
+        <p>Loading quiz history...</p>
+      ) : safeHistory.length === 0 ? (
+        <div className="alert alert-secondary">No quiz attempts yet.</div>
       ) : (
-        <ul className="list-group mb-5">
+        <ul className="list-group mb-4">
           {safeHistory.map((h, i) => (
             <li
               key={i}
               className="list-group-item d-flex justify-content-between"
             >
               <span>Attempt #{safeHistory.length - i}</span>
-              <span className="fw-bold text-danger">
+              <span
+                className={`fw-bold ${
+                  h.score >= 70 ? "text-success" : "text-danger"
+                }`}
+              >
                 Score: {h.score}
               </span>
             </li>
           ))}
         </ul>
       )}
-
-      <div className="d-flex gap-2">
-        <button
-          className="btn btn-outline-secondary"
-          onClick={() => navigate("/")}
-        >
-          Back
-        </button>
-        <button
-          className="btn btn-success"
-          onClick={() => navigate(`/quiz/${topicId}`)}
-        >
-          Continue Quiz
-        </button>
-      </div>
 
       <h4 className="mb-3">📺 Recommended Videos</h4>
 
@@ -131,15 +112,11 @@ const ProgressDetail = () => {
         </div>
       )}
 
-      <div className="row mb-5">
+      <div className="row mb-4">
         {safeVideos.map((v) => (
           <div className="col-md-4" key={v.videoId}>
             <div className="card h-100 shadow-sm">
-              <img
-                src={v.thumbnail}
-                className="card-img-top"
-                alt={v.title}
-              />
+              <img src={v.thumbnail} className="card-img-top" alt={v.title} />
               <div className="card-body d-flex flex-column">
                 <h6>{v.title}</h6>
                 <p className="text-muted">{v.channel}</p>
@@ -155,6 +132,21 @@ const ProgressDetail = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="d-flex gap-2">
+        <button
+          className="btn btn-outline-secondary"
+          onClick={() => navigate("/")}
+        >
+          Back
+        </button>
+        <button
+          className="btn btn-success"
+          onClick={() => navigate(`/quiz/${detail.topicId}`)}
+        >
+          Continue Quiz
+        </button>
       </div>
     </div>
   );
