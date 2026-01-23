@@ -1,5 +1,6 @@
 const Quiz = require('./quiz.model')
 const QuizResult = require('./quiz-result.model')
+const ApiError = require('../../utils/ApiError')
 
 async function saveQuiz({ topicId, level, quiz }) {
   return Quiz.create({
@@ -26,7 +27,7 @@ async function submitQuiz({ quizId, userId, answers }) {
     where: { quizId, userId },
   })
   if (exists) {
-    throw new Error('Quiz already submitted')
+    throw new ApiError(400, 'Quiz already submitted')
   }
 
   let correctCount = 0

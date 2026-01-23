@@ -2,15 +2,22 @@ const express = require('express')
 const router = express.Router()
 
 const {
-  generateLearningTopics
+  generateLearningTopics,
+  deleteTopic,
 } = require('./topic.controller')
 
 const authMiddleware = require('../../middlewares/auth.middleware')
 
 router.post(
-  '/topics/generate',
+  '/generate',
   authMiddleware,
   generateLearningTopics
+)
+
+router.delete(
+  '/:id',
+  authMiddleware,
+  deleteTopic
 )
 
 module.exports = router

@@ -1,3 +1,6 @@
+require('../config/database')
+
+const User = require('../modules/user/user.model')
 const Topic = require('../modules/learning/topic.model')
 const Quiz = require('../modules/learning/quiz.model')
 const QuizResult = require('../modules/learning/quiz-result.model')
@@ -9,7 +12,6 @@ Topic.hasMany(Quiz, {
 
 Quiz.belongsTo(Topic, {
   foreignKey: 'topicId',
-  as: 'Topic',
 })
 
 Quiz.hasMany(QuizResult, {
@@ -19,6 +21,11 @@ Quiz.hasMany(QuizResult, {
 
 QuizResult.belongsTo(Quiz, {
   foreignKey: 'quizId',
-  as: 'Quiz',
 })
 
+module.exports = {
+  User,
+  Topic,
+  Quiz,
+  QuizResult,
+}
