@@ -15,7 +15,7 @@ const Register = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(register({ name, email, password }));
+    dispatch(register({ email, password }));
   };
 
   useEffect(() => {
