@@ -10,7 +10,7 @@ const app = express();
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "OK",
-    message: "AI Learning Companion API is running 🚀",
+    message: "AI Learning API is running",
     timestamp: new Date().toISOString(),
   });
 });
