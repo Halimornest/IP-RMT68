@@ -18,7 +18,7 @@ const Home = () => {
           className="btn btn-danger"
           onClick={() => dispatch(logout())}
         >
-          Logout
+          Logout to Login Page
         </button>
       </div>
     </div>
