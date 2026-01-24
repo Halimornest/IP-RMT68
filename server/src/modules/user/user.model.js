@@ -36,6 +36,7 @@ const User = sequelize.define(
 )
 
 User.prototype.comparePassword = function (password) {
+  if (!this.passwordHash) return false
   return bcrypt.compare(password, this.passwordHash)
 }
 
