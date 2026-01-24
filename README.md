@@ -10,6 +10,7 @@ AI pada aplikasi ini **BUKAN chatbot bebas**.
 Semua prompt AI **dikontrol penuh oleh backend** dan hanya digunakan untuk konteks edukasi.
 
 ---
+URL : (https://ai-learning-bay.vercel.app/)
 
 ## 🚀 Tech Stack
 

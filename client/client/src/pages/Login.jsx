@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -60,11 +61,18 @@ const Login = () => {
           className="btn btn-danger w-100 mt-3"
           onClick={() =>
             (window.location.href =
-              "http://localhost:3000/api/auth/google")
+              "https://ai-learning.up.railway.app/api/auth/google")
           }
         >
           Continue with Google
         </button>
+
+        <p className="text-center mt-3">
+          Belum punya akun?{" "}
+          <Link to="/register" className="fw-bold">
+            Register
+          </Link>
+        </p>
 
         {error && (
           <p className="text-danger text-center mt-3">
