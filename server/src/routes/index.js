@@ -12,6 +12,6 @@ router.use('/learning', require('../modules/learning/learning.routes'))
 router.use('/quiz', require('../modules/learning/quiz.routes'))
 router.use('/progress', require('../modules/learning/progress.routes'))
 
-router.use('/topics', require('../modules/learning/topic.routes')) // ✅ PENTING
+router.use('/topics', require('../modules/learning/topic.routes')) 
 
 module.exports = router
