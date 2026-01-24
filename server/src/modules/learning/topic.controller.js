@@ -1,6 +1,4 @@
-const {
-  generateTopics
-} = require('./topic-generator.service')
+const { generateTopics } = require('./topic-generator.service')
 const { deleteTopicById } = require('./topic.service')
 const ApiError = require('../../utils/ApiError')
 const { requireUUID } = require('../../utils/validation')
@@ -15,7 +13,7 @@ const generateLearningTopics = async (req, res, next) => {
 
     const topics = await generateTopics({ subject, level })
 
-    res.status(201).json({ topics })
+    res.status(201).json({ success: true, topics })
   } catch (err) {
     next(err)
   }
