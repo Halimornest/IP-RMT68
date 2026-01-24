@@ -1,3 +1,4 @@
+
 const passport = require('passport')
 const GoogleStrategy = require('passport-google-oauth20').Strategy
 const User = require('../modules/user/user.model')
@@ -11,21 +12,17 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const email = profile.emails[0].value
+        const email = profile.emails?.[0]?.value
+        if (!email) return done(new Error('No email from Google'), null)
 
-        let user = await User.findOne({ where: { email },
-        defaults: {
-            email,
-            provider: 'google',
-            passwordHash: null,
-        },
-        })
+        let user = await User.findOne({ where: { email } })
 
         if (!user) {
           user = await User.create({
             email,
             name: profile.displayName,
             provider: 'google',
+            passwordHash: null,
           })
         }
 
@@ -36,5 +33,3 @@ passport.use(
     }
   )
 )
-
-module.exports = passport

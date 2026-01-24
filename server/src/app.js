@@ -2,7 +2,9 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 require("./models/associations");
-const passport = require("./config/passport");
+
+const passport = require("passport"); 
+require("./config/passport");        
 const routes = require("./routes");
 const errorMiddleware = require("./middlewares/error.middleware");
 const app = express();
@@ -14,8 +16,10 @@ app.get("/", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
 app.use(cors());
 app.use(express.json());
+
 app.use(passport.initialize());
 
 app.use("/api", routes);
