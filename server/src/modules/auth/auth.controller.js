@@ -16,33 +16,39 @@ function sanitizeUser(user) {
 
 async function register(req, res, next) {
   try {
-    requireFields(['email', 'password'], req.body)
+    console.log('REQ BODY:', req.body);
+    console.log('JWT_SECRET:', process.env.JWT_SECRET);
 
-    const { email, password } = req.body
+    requireFields(['email', 'password'], req.body);
 
-    const existingUser = await User.findOne({ where: { email } })
-    if (existingUser) {
-      throw new ApiError(409, 'Email already registered')
-    }
+    const { email, password } = req.body;
 
-    const passwordHash = await bcrypt.hash(password, 10)
+    const existingUser = await User.findOne({ where: { email } });
+    console.log('EXISTING USER:', existingUser);
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log('HASH OK');
 
     const user = await User.create({
       email,
       passwordHash,
       provider: 'local',
-    })
+    });
+    console.log('USER CREATED:', user.id);
 
-    const token = generateToken(user)
+    const token = generateToken(user);
+    console.log('TOKEN OK');
 
     return successResponse(res, {
       user: sanitizeUser(user),
       token,
-    }, 201)
+    }, 201);
   } catch (err) {
-    next(err)
+    console.error('REGISTER ERROR:', err);
+    next(err);
   }
 }
+
 
 async function login(req, res, next) {
   try {
