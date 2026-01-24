@@ -29,7 +29,7 @@ Semua prompt AI **dikontrol penuh oleh backend** dan hanya digunakan untuk konte
 - React Router
 - Bootstrap
 - Vitest
-- React Testing Library
+- React Testing
 
 ---
 
